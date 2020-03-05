@@ -1,0 +1,18 @@
+{	
+	"organisationName": "",
+	"springBoot" : [{
+		"applicationName": "",
+		"apiEndpoints" : 
+		[
+			{
+				"uri" : "",
+				"action" : "GET",
+				"before": "",
+				"after": "",
+				"around": "",
+				"afterThrowing": ""   
+			}
+		]
+	}]
+	
+}
