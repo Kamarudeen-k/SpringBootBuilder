@@ -3,10 +3,10 @@ package com.enterprisecore.configuration;
 import java.io.File;
 import java.io.FileWriter;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,7 +47,7 @@ public class ConfigurationProcessor {
 				filePath = basePath + File.separator + getStringFirstCharUppercase(bootApp[i].getApplicationName()) + "Controller.java";
 				LOG.debug("Controller File: "+filePath);
 				fileWriter = new FileWriter(filePath);
-				Set<String> fileImportHeader = new HashSet<String>();
+				Set<String> fileImportHeader = new TreeSet<String>();
 				List<String> fileData = new ArrayList<String>();
 				
 				fileImportHeader.add("import org.springframework.boot.RestController");
@@ -105,6 +105,7 @@ public class ConfigurationProcessor {
 				//Add package
 				fileWriter.write("package com." + apiApp.getOrganisationName() + "." + bootApp[i].getApplicationName()+ ";");
 				fileWriter.append("\n");
+				
 				//Add import headers
 				Iterator lIter = fileImportHeader.iterator();
 				String text;
@@ -121,7 +122,11 @@ public class ConfigurationProcessor {
 				String methodName;
 				while(lIter.hasNext()) {
 					text = (String)lIter.next();
+					
+					if(!text.contains("Mapping"))
+						fileWriter.append("\n");
 					fileWriter.append("\n\t" + text);
+					
 					methodName = "";
 					int index = text.lastIndexOf("(");
 					if(index >= 0 && text.contains("Mapping")) {
@@ -134,22 +139,22 @@ public class ConfigurationProcessor {
 					
 					if(text.contains("GetMapping")) {
 						text = "\n\tpublic ResponseEntity<T> get" + methodName + "(){";
-						text += "\n\t\treturn new ResponseEntity.OK().build();";
+						text += "\n\t\treturn ResponseEntity.OK().build();";
 						text += "\n\t}";				
 					}
 					if(text.contains("PostMapping")) {
 						text = "\n\tpublic ResponseEntity<T> add" + methodName + "(){";
-						text += "\n\t\treturn new ResponseEntity.Created().build();";
+						text += "\n\t\treturn ResponseEntity.Created().build();";
 						text += "\n\t}";				
 					}
 					if(text.contains("PutMapping")) {
 						text = "\n\tpublic ResponseEntity<T> addnUpdate" + methodName + "(){";
-						text += "\n\t\treturn new ResponseEntity.OK().build();";
+						text += "\n\t\treturn ResponseEntity.OK().build();";
 						text += "\n\t}";				
 					}
 					if(text.contains("PatchMapping")) {
 						text = "\n\tpublic ResponseEntity<T> update" + methodName + "(){";
-						text += "\n\t\treturn new ResponseEntity.OK().build();";
+						text += "\n\t\treturn ResponseEntity.OK().build();";
 						text += "\n\t}";				
 					}
 					//add Method signature
@@ -177,12 +182,12 @@ public class ConfigurationProcessor {
 		try(FileWriter fileWriter = new FileWriter(filePath)) {
 						
 			String fileContent = "package com." + orgName + "." + bootApp.getApplicationName() + ";" +
-			"\nimport org.springframework.boot.SpringApplication;" + 
-			"\n\nimport org.springframework.boot.autoconfigure.SpringBootApplication;" +  
+			"\n\nimport org.springframework.boot.SpringApplication;" + 
+			"\nimport org.springframework.boot.autoconfigure.SpringBootApplication;" +  
 			"\n\n@SpringBootApplication" + 
-			"\npublic class "+bootApp.getApplicationName()+"Application {" +  
+			"\npublic class "+ this.getStringFirstCharUppercase(bootApp.getApplicationName())+"Application {" +  
 			"\n\n\tpublic static void main(String[] args) {" + 
-			"\n\t\tSpringApplication.run(" +bootApp.getApplicationName()+"Application.class, args);" + 
+			"\n\t\tSpringApplication.run(" + this.getStringFirstCharUppercase(bootApp.getApplicationName())+"Application.class, args);" + 
 			"\n\t}" +  
 			"\n\n}";
 			fileWriter.write(fileContent);
