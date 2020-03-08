@@ -2,7 +2,10 @@ package com.enterprisecore.builder;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,23 +22,24 @@ public class SpringBootBuilderController {
 
 	@Autowired 
 	SpringBootAppGeneratorService appGenService; 
+	private static final Logger LOG = LoggerFactory.getLogger(SpringBootBuilderController.class);
 	
 	@PostMapping(path="/spring-boot-app", consumes="application/json")
 	public CompletableFuture<ResponseEntity<?>> generateSpringBootApp(
 			@RequestBody Optional<APIApplication> apiApp){
 		ResponseEntity<?> response = null;
 		try {
-			boolean result = false;
+			Future<Boolean> result = null;
 			if(apiApp.isPresent())
 				result = appGenService.generateSpringBootApp(apiApp.get());
-			 
-			if(result)
+			
+			if((Boolean)result.get())
 				response = ResponseEntity.ok().build();
 			else
 				response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 			
 		}catch(Exception ex) {
-			ex.printStackTrace();
+			LOG.error(ex.getMessage());
 			response = ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
 		

@@ -14,9 +14,9 @@ public class AsynchronousThreadConfiguraion {
 	@Bean
 	public Executor taskExecutor() {
 		ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
-		taskExecutor.setCorePoolSize(5);
+		taskExecutor.setCorePoolSize(7);
 		taskExecutor.setMaxPoolSize(10);
-		taskExecutor.setQueueCapacity(200);
+		taskExecutor.setQueueCapacity(500);
 		taskExecutor.setThreadNamePrefix("ConigProcessor: ");
 		taskExecutor.initialize();
 		return taskExecutor;
