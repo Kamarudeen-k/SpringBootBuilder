@@ -7,6 +7,7 @@ public class APIApplication {
 	
 	private SpringBootApp springBoot[];
 	private String organisationName;
+	private Aspects aspects[];
 	
 	public APIApplication() {
 		
@@ -26,5 +27,13 @@ public class APIApplication {
 
 	public void setOrganisationName(String organisationName) {
 		this.organisationName = organisationName;
+	}
+
+	public Aspects[] getAspects() {
+		return aspects;
+	}
+
+	public void setAspects(Aspects[] aspects) {
+		this.aspects = aspects;
 	}
 }

@@ -2,8 +2,8 @@ package com.enterprisecore.model;
 
 public class SpringBootApp {
 	private String applicationName;
-	
 	private APIEndpoints apiEndpoints[];
+	private Aspects aspects[];
 	
 	public String getApplicationName() {
 		return applicationName;
@@ -16,6 +16,12 @@ public class SpringBootApp {
 	}
 	public void setApiEndpoints(APIEndpoints[] apiEndpoints) {
 		this.apiEndpoints = apiEndpoints;
+	}
+	public Aspects[] getAspects() {
+		return aspects;
+	}
+	public void setAspects(Aspects[] aspects) {
+		this.aspects = aspects;
 	}
 	
 }

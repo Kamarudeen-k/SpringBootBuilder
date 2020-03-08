@@ -24,7 +24,7 @@ public class SpringBootAppGeneratorService {
 	public boolean generateSpringBootApp(APIApplication apiApp) {
 		LOG.info("App generator service started for organisation: "+apiApp.getOrganisationName());
 	
-		return configProcessor.generateSpringBootApp(apiApp);
+		return configProcessor.generateSpringBootApps(apiApp);
 		
 	}
 }

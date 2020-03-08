@@ -2,9 +2,10 @@ package com.enterprisecore.configuration;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Component;
 
 import com.enterprisecore.model.APIApplication;
 import com.enterprisecore.model.APIEndpoints;
+import com.enterprisecore.model.Aspects;
 import com.enterprisecore.model.SpringBootApp;
 
 @Component
@@ -27,148 +29,28 @@ public class ConfigurationProcessor {
 		
 	}
 	
-	public boolean generateSpringBootApp(APIApplication apiApp) {
-			
+	public boolean generateSpringBootApps(APIApplication apiApp) {
 		try {
-			FileWriter fileWriter = null;
-			
-			String basePath = System.getProperty("user.dir") + File.separator + apiApp.getOrganisationName();
+			String basePath = System.getProperty("user.dir") + File.separator + "target-deliverables" + File.separator + apiApp.getOrganisationName();
 			String filePath;
-			SpringBootApp bootApp[] = apiApp.getSpringBoot();
-			for(int i=0; i<bootApp.length; i++) {
-				//CREATE SPRING BOOT APP FILE
-				filePath = basePath + File.separator + getStringFirstCharUppercase(bootApp[i].getApplicationName()) + ".java";
+			SpringBootApp bootApps[] = apiApp.getSpringBoot();
+			for(SpringBootApp bootApp: bootApps) {
+				String orgName = apiApp.getOrganisationName();
+				String appName = bootApp.getApplicationName();
+				filePath = basePath + File.separator + appName + File.separator + getStringFirstCharUppercase(appName) + ".java";
 				LOG.debug("Spring Boot App File: "+filePath);
 				File file = new File(filePath);
 				file.getParentFile().mkdirs();
-				createSpringBootAppFile(bootApp[i], apiApp.getOrganisationName(), filePath);
+				
+				//CREATE SPRING BOOT APP FILE
+				this.createSpringBootAppFile(bootApp, orgName, filePath);
 				
 				//CREATE CONTROLLER FILE
-				filePath = basePath + File.separator + getStringFirstCharUppercase(bootApp[i].getApplicationName()) + "Controller.java";
-				LOG.debug("Controller File: "+filePath);
-				fileWriter = new FileWriter(filePath);
-				Set<String> fileImportHeader = new TreeSet<String>();
-				List<String> fileData = new ArrayList<String>();
+				this.createControllerFile(bootApp, orgName, basePath);
 				
-				fileImportHeader.add("import org.springframework.boot.RestController");
-				
-				APIEndpoints[] apiArray = bootApp[i].getApiEndpoints();
-				
-				for(int j=0; j<apiArray.length; j++) {
-					APIEndpoints apiData = apiArray[j];
-					String methodRefs = (String)apiData.getBefore();
-					if(!methodRefs.isEmpty()) {
-						fileData.add("@Before(\"" + methodRefs + "\")");
-						fileImportHeader.add("import org.aspectj.lang.annonation.Before");
-					}
-					methodRefs = (String)apiData.getAfter();
-					if(!methodRefs.isEmpty()) {
-						fileData.add("@After(\"" + methodRefs + "\")");
-						fileImportHeader.add("import org.aspectj.lang.annonation.After");
-					}
-					methodRefs = (String)apiData.getAround();
-					if(!methodRefs.isEmpty()) {
-						fileData.add("@Around(\"" + methodRefs + "\")");
-						fileImportHeader.add("import org.aspectj.lang.annonation.Around");
-					}
-					methodRefs = (String)apiData.getAfterThrowing();
-					if(!methodRefs.isEmpty()) {
-						fileData.add("@AfterThrowing(\"" + methodRefs + "\")");
-						fileImportHeader.add("import org.aspectj.lang.annonation.AfterThrowing");
-					}
-					
-					methodRefs = (String)apiData.getUri();
-					String action = (String)apiData.getAction();
-					switch(action) {
-					case "GET":
-						fileData.add("@GetMapping(\""+methodRefs+"\")");
-						fileImportHeader.add("import org.springframework.web.bind.GetMapping");
-						break;
-					case "POST":
-						fileData.add("@PostMapping(\""+methodRefs+"\")");
-						fileImportHeader.add("import org.springframework.web.bind.PostMapping");
-						break;
-					case "PUT":
-						fileData.add("@PutMapping(\""+methodRefs+"\")");
-						fileImportHeader.add("import org.springframework.web.bind.PutMapping");
-						break;
-					case "PATCH":
-						fileData.add("@PatchMapping(\""+methodRefs+"\")");
-						fileImportHeader.add("import org.springframework.web.bind.PatchMapping");
-						break;
-					default:
-						LOG.info("Incorrect http action: "+ action + "configured");
-					}
-					
-				}
-				
-				//Add package
-				fileWriter.write("package com." + apiApp.getOrganisationName() + "." + bootApp[i].getApplicationName()+ ";");
-				fileWriter.append("\n");
-				
-				//Add import headers
-				Iterator lIter = fileImportHeader.iterator();
-				String text;
-				while(lIter.hasNext()) {
-					text = (String)lIter.next() + ";";
-					fileWriter.append("\n"+text);
-				}
-				
-				//Add file content		
-				fileWriter.append("\n\n@RestController"); 
-				fileWriter.append("\npublic class "+ this.getStringFirstCharUppercase(bootApp[i].getApplicationName()) +"Controller {"); 
-				
-				lIter = fileData.iterator();
-				String methodName;
-				while(lIter.hasNext()) {
-					text = (String)lIter.next();
-					
-					if(!text.contains("Mapping"))
-						fileWriter.append("\n");
-					fileWriter.append("\n\t" + text);
-					
-					methodName = "";
-					int index = text.lastIndexOf("(");
-					if(index >= 0 && text.contains("Mapping")) {
-						int nextIndex = text.lastIndexOf(")");
-						if(nextIndex > 0) {
-							methodName = text.substring(index+2, nextIndex-1);
-							methodName = this.getStringFirstCharUppercase(methodName);
-						}
-					}
-					
-					if(text.contains("GetMapping")) {
-						text = "\n\tpublic ResponseEntity<T> get" + methodName + "(){";
-						text += "\n\t\treturn ResponseEntity.OK().build();";
-						text += "\n\t}";				
-					}
-					if(text.contains("PostMapping")) {
-						text = "\n\tpublic ResponseEntity<T> add" + methodName + "(){";
-						text += "\n\t\treturn ResponseEntity.Created().build();";
-						text += "\n\t}";				
-					}
-					if(text.contains("PutMapping")) {
-						text = "\n\tpublic ResponseEntity<T> addnUpdate" + methodName + "(){";
-						text += "\n\t\treturn ResponseEntity.OK().build();";
-						text += "\n\t}";				
-					}
-					if(text.contains("PatchMapping")) {
-						text = "\n\tpublic ResponseEntity<T> update" + methodName + "(){";
-						text += "\n\t\treturn ResponseEntity.OK().build();";
-						text += "\n\t}";				
-					}
-					//add Method signature
-					if(text.contains("ResponseEntity"))
-						fileWriter.append(text);
-				}
-				
-				fileWriter.append("\n}");
-				fileWriter.close();
-				//clear file data collections memory
-				fileImportHeader.clear();
-				fileData.clear();
+				//CREATE ASPECTS FILE
+				this.createAspectFiles(bootApp, basePath, orgName, appName);
 			}
-			
 		}catch(Exception ex) {
 			LOG.error(ex.getMessage());
 			return false;
@@ -177,7 +59,220 @@ public class ConfigurationProcessor {
 		return true;
 	}
 	
-	private void createSpringBootAppFile(SpringBootApp bootApp, String orgName, String filePath) throws Exception {
+	public void createControllerFile(SpringBootApp bootApp, String orgName, String basePath) {
+		try {
+			String filePath = basePath + File.separator + bootApp.getApplicationName() + File.separator + getStringFirstCharUppercase(bootApp.getApplicationName()) + "Controller.java";
+			LOG.debug("Controller File: "+filePath);
+			FileWriter fileWriter = new FileWriter(filePath);
+			Set<String> fileImportHeader = new TreeSet<String>();
+			List<String> fileData = new ArrayList<String>();
+			
+			fileImportHeader.add("import org.springframework.boot.RestController");
+			
+			APIEndpoints[] apiArray = bootApp.getApiEndpoints();
+			
+			for(APIEndpoints apiData: apiArray) {
+				String methodRefs = (String)apiData.getUri();
+				String action = (String)apiData.getAction();
+				switch(action) {
+				case "GET":
+					fileData.add("@GetMapping(\"/"+methodRefs+"\")");
+					fileImportHeader.add("import org.springframework.web.bind.GetMapping");
+					break;
+				case "POST":
+					fileData.add("@PostMapping(\"/"+methodRefs+"\")");
+					fileImportHeader.add("import org.springframework.web.bind.PostMapping");
+					break;
+				case "PUT":
+					fileData.add("@PutMapping(\"/"+methodRefs+"\")");
+					fileImportHeader.add("import org.springframework.web.bind.PutMapping");
+					break;
+				case "PATCH":
+					fileData.add("@PatchMapping(\"/"+methodRefs+"\")");
+					fileImportHeader.add("import org.springframework.web.bind.PatchMapping");
+					break;
+				case "DELETE":
+					fileData.add("@DeleteMapping(\"/"+methodRefs+"\")");
+					fileImportHeader.add("import org.springframework.web.bind.DeleteMapping");
+					break;
+				default:
+					LOG.info("Incorrect http action: "+ action + "configured");
+				}
+				
+			}
+			
+			//Add package
+			fileWriter.write("package com." + orgName + "." + bootApp.getApplicationName()+ ";");
+			fileWriter.append("\n");
+			
+			//Add import headers
+			fileImportHeader.forEach(entry -> {
+				try {
+					fileWriter.append("\n" + entry + ";");
+				} catch (IOException e) {
+					LOG.error(e.getMessage());
+				}
+			});
+			
+			//Add file content		
+			fileWriter.append("\n\n@RestController"); 
+			fileWriter.append("\npublic class "+ this.getStringFirstCharUppercase(bootApp.getApplicationName()) +"Controller {"); 
+			fileWriter.append("\n");
+			
+			ListIterator<String> lIter = fileData.listIterator();
+			String methodName;
+			String text;
+			boolean nextAPI = true;
+			while(lIter.hasNext()) {
+				text = lIter.next();
+				
+				if(nextAPI && !text.contains("Mapping")) {
+					fileWriter.append("\n");
+					nextAPI = false;
+				}
+					
+				fileWriter.append("\n\t" + text);
+				
+				methodName = "";
+				int index = text.lastIndexOf("/");
+				if(index >= 0 && text.contains("Mapping")) {
+					int nextIndex = text.lastIndexOf(")");
+					if(nextIndex > 0) {
+						methodName = text.substring(index+1, nextIndex-1);
+						methodName = this.getStringFirstCharUppercase(methodName);
+					}
+				}
+				
+				if(text.contains("GetMapping")) {
+					text = "\n\tpublic ResponseEntity<?> get" + methodName + "(){";
+					text += "\n\t\treturn ResponseEntity.OK().build();";
+					text += "\n\t}";				
+				}else
+				if(text.contains("PostMapping")) {
+					text = "\n\tpublic ResponseEntity<?> add" + methodName + "(){";
+					text += "\n\t\treturn ResponseEntity.Created().build();";
+					text += "\n\t}";				
+				}else
+				if(text.contains("PutMapping")) {
+					text = "\n\tpublic ResponseEntity<?> addnUpdate" + methodName + "(){";
+					text += "\n\t\treturn ResponseEntity.OK().build();";
+					text += "\n\t}";				
+				}else
+				if(text.contains("PatchMapping")) {
+					text = "\n\tpublic ResponseEntity<?> update" + methodName + "(){";
+					text += "\n\t\treturn ResponseEntity.OK().build();";
+					text += "\n\t}";				
+				}else
+				if(text.contains("DeleteMapping")) {
+					text = "\n\tpublic ResponseEntity<?> delete" + methodName + "(){";
+					text += "\n\t\treturn ResponseEntity.OK().build();";
+					text += "\n\t}";				
+				}
+				//add Method signature
+				if(text.contains("ResponseEntity")) {
+					fileWriter.append(text);
+					nextAPI = true;
+				}
+					
+			}
+			
+			fileWriter.append("\n}");
+			fileWriter.close();
+			//clear file data collections memory
+			fileImportHeader.clear();
+			fileData.clear();
+			
+		}catch(Exception ex) {
+			LOG.error(ex.getMessage());
+		}
+	}
+	
+	public void createAspectFiles(SpringBootApp bootApp, String rootPath, String orgName, String applicationName) {		
+		try {
+			Aspects aspects[] = bootApp.getAspects();
+			for(Aspects aspect: aspects) {
+				String filePath = rootPath + File.separator + applicationName + File.separator + this.getStringFirstCharUppercase(aspect.getName()) + ".java";
+				File file = new File(filePath);
+				file.getParentFile().mkdirs();
+				
+				FileWriter fileWriter = new FileWriter(filePath);
+				Set<String> fileImportHeader = new TreeSet<String>();
+				List<String> fileData = new ArrayList<String>();
+				
+				fileImportHeader.add("import org.aspectj.lang.annotation.Aspect");
+				String methodRefs = aspect.getBefore();
+				if(!methodRefs.isEmpty()) {
+					fileData.add("@Before(\"" + methodRefs + "\")");
+					fileData.add("public void before" + aspect.getName() +"Aspect(){");
+					fileData.add("}");
+					fileImportHeader.add("import org.aspectj.lang.annonation.Before");
+				}
+				methodRefs = aspect.getAfter();
+				if(!methodRefs.isEmpty()) {
+					fileData.add("@After(\"" + methodRefs + "\")");
+					fileData.add("public void after" + aspect.getName() +"Aspect(){");
+					fileData.add("}");
+					fileImportHeader.add("import org.aspectj.lang.annonation.After");
+				}
+				methodRefs = aspect.getAfterReturning();
+				if(!methodRefs.isEmpty()) {
+					fileData.add("@AfterReturning(\"" + methodRefs + "\")");
+					fileData.add("public void afterReutring" + aspect.getName() +"Aspect(){");
+					fileData.add("}");
+					fileImportHeader.add("import org.aspectj.lang.annonation.AfterReturning");
+				}
+				methodRefs = aspect.getAround();
+				if(!methodRefs.isEmpty()) {
+					fileData.add("@Around(\"" + methodRefs + "\")");
+					fileData.add("public void around" + aspect.getName() +"Aspect(){");
+					fileData.add("}");
+					fileImportHeader.add("import org.aspectj.lang.annonation.Around");
+				}
+				methodRefs = aspect.getAfterThrowing();
+				if(!methodRefs.isEmpty()) {
+					fileData.add("@AfterThrowing(\"" + methodRefs + "\")");
+					fileData.add("public void afterThrowing" + aspect.getName() +"Aspect(){");
+					fileData.add("}");
+					fileImportHeader.add("import org.aspectj.lang.annonation.AfterThrowing");
+				}
+				//start writing the Aspect file
+				fileWriter.append("package com." + orgName + "." + applicationName + ";");
+				fileWriter.append("\n");
+				//write Aspect import headers
+				fileImportHeader.forEach(entry -> {
+					try {
+						fileWriter.append("\n" + entry + ";");
+					} catch (IOException e) {
+						LOG.error(e.getMessage());;					
+					}
+				});
+				
+				//write Aspect class
+				fileWriter.append("\n\n@Aspect");
+				fileWriter.append("\npublic class "+ this.getStringFirstCharUppercase(aspect.getName()) + "{");
+				fileWriter.append("\n");
+				
+				//write Aspect methods
+				fileData.forEach(data -> {
+					try {
+						fileWriter.append("\n\t" + data);
+					} catch (IOException e) {
+						LOG.error(e.getMessage());
+					}
+				});
+				fileWriter.append("\n\n}");
+				fileWriter.close();
+				fileImportHeader.clear();
+				fileData.clear();
+			}
+				
+		}catch(Exception ex) {
+			LOG.error(ex.getMessage());
+		}
+		return;
+	}
+	
+	public void createSpringBootAppFile(SpringBootApp bootApp, String orgName, String filePath) {
 		
 		try(FileWriter fileWriter = new FileWriter(filePath)) {
 						
@@ -194,7 +289,6 @@ public class ConfigurationProcessor {
 			
 		}catch(Exception ex) {
 			LOG.error(ex.getMessage());
-			throw ex;
 		}
 		return;
 	}

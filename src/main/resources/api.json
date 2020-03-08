@@ -6,11 +6,17 @@
 		[
 			{
 				"uri" : "",
-				"action" : "GET",
+				"action" : "GET"   
+			}
+		],
+		"aspects" : [
+			{
+				"name" : "",
 				"before": "",
 				"after": "",
+				"afterReturning" : "",
 				"around": "",
-				"afterThrowing": ""   
+				"afterThrowing": ""
 			}
 		]
 	}]
