@@ -4,20 +4,30 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
+import com.enterprisecore.interfaces.EnterpriseInjector;
 import com.enterprisecore.model.APIApplication;
 import com.enterprisecore.model.APIEndpoints;
 import com.enterprisecore.model.Aspects;
+import com.enterprisecore.model.Parameter;
 import com.enterprisecore.model.SpringBootApp;
+import com.enterprisecore.model.SpringBootConfigurator;
 
 @Component
 @Scope("prototype")
@@ -301,6 +311,29 @@ public class ConfigurationProcessor {
 		stdClassName = stdClassName.toUpperCase() + className.substring(1);
 		
 		return  stdClassName;
+	}
+
+	public Optional<?> configureSpringBootAPI(SpringBootConfigurator configs) {
+		try {
+			RestTemplate template = new RestTemplate();
+			String response = null;
+			Map<String, String> params = new HashMap<String, String>();
+			for(Parameter param: configs.getApiParameters()) {
+				params.put(param.getName(), param.getValue());
+			}
+			switch(configs.getApiType()) {
+			case "GET":
+				response = template.getForObject(configs.getApiEndpoint(), String.class, params);
+				break;
+			}
+			
+			EnterpriseInjector client = configs.getInjector();
+			Optional<?> computedResponse = client.process(configs.getApiParameters(), response);
+			return computedResponse;
+		}catch(Exception ex) {
+			LOG.error(ex.getMessage());
+		}
+		return null;
 	}
 	
 	
