@@ -19,6 +19,22 @@
 				"afterThrowing": ""
 			}
 		]
-	}]
-	
+	}],
+	"springBootConfigurator" : [ 
+		{	
+			"injector" : "",
+			"injectorMethod" : "",
+			"methodParameters" : [{
+				"name" : "",
+				"value" : ""
+			}],
+			"apiEndpoint" : "",
+			"apiParameters" : [{
+				"name" : "",
+				"value" : ""
+			}],
+			"apiType" : "",
+			"response" : ""
+		}
+	]
 }
