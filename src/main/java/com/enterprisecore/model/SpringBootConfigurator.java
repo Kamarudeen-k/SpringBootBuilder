@@ -1,30 +1,56 @@
 package com.enterprisecore.model;
 
-import java.util.Optional;
 
 import com.enterprisecore.interfaces.EnterpriseInjector;
 
 public class SpringBootConfigurator {
 	
 	private EnterpriseInjector injector;
-	private Optional<?> injectorMethod;
+	private String injectorName;
+	private String injectorPackage;
+	private String injectorMethod;
 	private Parameter methodParameters[];
 	private String apiEndpoint;
 	private Parameter apiParameters[];
 	private String apiType;
+	private String apiBody;
 	private String response;
 	private String classType;
 	
 	public EnterpriseInjector getInjector() {
 		return injector;
 	}
+	
 	public void setInjector(EnterpriseInjector injector) {
 		this.injector = injector;
 	}
-	public Optional<?> getInjectorMethod() {
+	
+	protected void setUpNewInjector() throws Exception {
+		if(this.injectorName.isEmpty())
+			throw new NullPointerException("Empty class name!");
+		
+		injector = (EnterpriseInjector)Class.forName(this.injectorPackage + "." + this.injectorName).newInstance();
+		return;
+	}
+	
+	public String getInjectorName() {
+		return injectorName;
+	}
+	public void setInjectorName(String injectorName) throws Exception {
+		this.injectorName = injectorName;
+		
+		this.setUpNewInjector();
+	}
+	public String getInjectorPackage() {
+		return injectorPackage;
+	}
+	public void setInjectorPackage(String injectorPackage) {
+		this.injectorPackage = injectorPackage;
+	}
+	public String getInjectorMethod() {
 		return injectorMethod;
 	}
-	public void setInjectorMethod(Optional<?> injectorMethod) {
+	public void setInjectorMethod(String injectorMethod) {
 		this.injectorMethod = injectorMethod;
 	}
 	public Parameter[] getMethodParameters() {
@@ -51,6 +77,14 @@ public class SpringBootConfigurator {
 	public void setApiType(String apiType) {
 		this.apiType = apiType;
 	}
+	public String getApiBody() {
+		return apiBody;
+	}
+
+	public void setApiBody(String apiBody) {
+		this.apiBody = apiBody;
+	}
+
 	public String getResponse() {
 		return response;
 	}

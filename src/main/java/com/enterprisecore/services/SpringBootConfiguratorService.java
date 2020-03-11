@@ -1,6 +1,6 @@
 package com.enterprisecore.services;
 
-import java.util.Optional;
+
 import java.util.concurrent.Future;
 
 import org.slf4j.Logger;
@@ -8,10 +8,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.AsyncResult;
+import org.springframework.stereotype.Service;
 
 import com.enterprisecore.configuration.ConfigurationProcessor;
 import com.enterprisecore.model.SpringBootConfigurator;
 
+@Service
 public class SpringBootConfiguratorService {
 	
 	@Autowired
@@ -23,10 +25,10 @@ public class SpringBootConfiguratorService {
 	}
 	
 	@Async
-	public Future<Optional<?>> configureSpringBootApp(SpringBootConfigurator configs) {
+	public Future<SpringBootConfigurator> springBootAppConfigurationProcessor(SpringBootConfigurator configs) throws Exception {
 		LOG.info("SpringBootAppConfigurator service started for: "+configs.getApiType() + configs.getApiEndpoint());
 	
-		return new AsyncResult<>(configProcessor.configureSpringBootAPI(configs));
+		return new AsyncResult<SpringBootConfigurator>(configProcessor.configureSpringBootAPI(configs));
 		
 	}
 
