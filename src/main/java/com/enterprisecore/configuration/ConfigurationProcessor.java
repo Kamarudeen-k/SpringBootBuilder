@@ -16,9 +16,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Scope;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
 import com.enterprisecore.interfaces.EnterpriseInjector;
@@ -313,27 +315,52 @@ public class ConfigurationProcessor {
 		return  stdClassName;
 	}
 
-	public Optional<?> configureSpringBootAPI(SpringBootConfigurator configs) {
+	public SpringBootConfigurator configureSpringBootAPI(SpringBootConfigurator configs) throws Exception {
+		String computedResponse = "";
 		try {
 			RestTemplate template = new RestTemplate();
-			String response = null;
+			HttpEntity<String> request;
+			ResponseEntity<String> response = null;
+			MultiValueMap<String, String> headers = null;
 			Map<String, String> params = new HashMap<String, String>();
 			for(Parameter param: configs.getApiParameters()) {
 				params.put(param.getName(), param.getValue());
 			}
 			switch(configs.getApiType()) {
 			case "GET":
-				response = template.getForObject(configs.getApiEndpoint(), String.class, params);
+				response = template.getForEntity(configs.getApiEndpoint(), String.class, params);
+				break;
+				
+			case "POST": 
+				request = new HttpEntity<String>(configs.getApiBody(), headers);
+				response = template.postForEntity(configs.getApiEndpoint(), request, String.class, params);
+				break;
+				
+			case "PUT": 
+				request = new HttpEntity<String>(configs.getApiBody(), headers);
+				template.put(configs.getApiEndpoint(), request, params);
+				break;
+				
+			case "PATCH": 
+				request = new HttpEntity<String>(configs.getApiBody(), headers);
+				template.patchForObject(configs.getApiEndpoint(), request, String.class, params);
+				break;
+				
+			case "DELETE": 
+				request = new HttpEntity<String>(configs.getApiBody(), headers);
+				template.delete(configs.getApiEndpoint(), params);
 				break;
 			}
 			
 			EnterpriseInjector client = configs.getInjector();
-			Optional<?> computedResponse = client.process(configs.getApiParameters(), response);
-			return computedResponse;
+			computedResponse = client.process(configs.getApiParameters(), response.getBody());
+			configs.setResponse(computedResponse); 
+			
 		}catch(Exception ex) {
 			LOG.error(ex.getMessage());
+			throw ex;
 		}
-		return null;
+		return configs;
 	}
 	
 	

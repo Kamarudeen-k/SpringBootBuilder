@@ -22,7 +22,8 @@
 	}],
 	"springBootConfigurator" : [ 
 		{	
-			"injector" : "",
+			"injectorPackage" : "",
+			"injectorName" : "",
 			"injectorMethod" : "",
 			"methodParameters" : [{
 				"name" : "",
@@ -34,6 +35,7 @@
 				"value" : ""
 			}],
 			"apiType" : "",
+			"apiBody" : "",
 			"response" : ""
 		}
 	]
