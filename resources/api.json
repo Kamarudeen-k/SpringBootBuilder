@@ -1,0 +1,42 @@
+{	
+	"organisationName": "",
+	"springBoot" : [{
+		"applicationName": "",
+		"apiEndpoints" : 
+		[
+			{
+				"uri" : "",
+				"action" : "GET"   
+			}
+		],
+		"aspects" : [
+			{
+				"name" : "",
+				"before": "",
+				"after": "",
+				"afterReturning" : "",
+				"around": "",
+				"afterThrowing": ""
+			}
+		]
+	}],
+	"springBootConfigurator" : [ 
+		{	
+			"injectorPackage" : "",
+			"injectorName" : "",
+			"injectorMethod" : "",
+			"methodParameters" : [{
+				"name" : "",
+				"value" : ""
+			}],
+			"apiEndpoint" : "",
+			"apiParameters" : [{
+				"name" : "",
+				"value" : ""
+			}],
+			"apiType" : "",
+			"apiBody" : "",
+			"response" : ""
+		}
+	]
+}
